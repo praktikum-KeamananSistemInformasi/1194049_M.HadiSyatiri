@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perbandingan Hash File</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffffff; /* Warna latar belakang putih */
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2 {
+            color: #000000; /* Warna teks hitam */
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Efek bayangan pada teks */
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0; /* Latar belakang abu-abu muda */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Bayangan lebih dalam */
+            border-radius: 10px; /* Sudut lebih bulat */
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 5px; /* Bulatkan sudut tabel */
+            overflow: hidden; /* Menghindari overflow pada sudut tabel */
+        }
+        th {
+            background-color: #000000; /* Hitam untuk judul kolom */
+            color: white;
+            padding: 12px; /* Padding lebih banyak */
+            text-align: center;
+            font-size: 1.1em; /* Ukuran font lebih besar */
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 10px; /* Padding lebih banyak */
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background-color: #e0e0e0; /* Warna latar belakang baris genap */
+        }
+        form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f5f5f5; /* Latar belakang form abu-abu muda */
+            border-radius: 10px; /* Sudut lebih bulat */
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            font-weight: bold;
+            color: #000000; /* Warna hitam */
+            display: block;
+            margin-bottom: 8px;
+        }
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px; /* Padding lebih banyak */
+            border: 1px solid #ccc;
+            border-radius: 5px; /* Sudut lebih bulat */
+            margin-bottom: 10px;
+            font-size: 16px; /* Ukuran font lebih besar */
+        }
+        input[type="submit"] {
+            background-color: #000000; /* Warna hitam untuk tombol */
+            color: white;
+            border: none;
+            padding: 12px; /* Padding lebih banyak */
+            border-radius: 5px; /* Sudut lebih bulat */
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Tambahkan transisi untuk efek */
+        }
+        input[type="submit"]:hover {
+            background-color: #333333; /* Warna lebih gelap saat hover */
+            transform: scale(1.05); /* Efek zoom saat hover */
+        }
+        table tbody tr:hover {
+            background-color: #cccccc; /* Warna latar belakang baris saat hover */
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>PERBANDINGAN HASH FILE</h1>
+        
+        <h2>Informasi Hash</h2>
+        <table>
+            <tr>
+                <th>Deskripsi</th>
+                <th>Hash</th>
+            </tr>
+            <tr>
+                <td>Hash Asli</td>
+                <td id="original-hash">Loading...</td>
+            </tr>
+            <tr>
+                <td>Hash Dimodifikasi</td>
+                <td id="modified-hash">Loading...</td>
+            </tr>
+        </table>
+
+        <h2>Perbandingan Isi File</h2>
+        <table>
+            <tr>
+                <th>Nomor Baris</th>
+                <th>Isi Asli</th>
+                <th>Isi Dimodifikasi</th>
+            </tr>
+            <tbody id="file-content">
+                <!-- Konten file akan dipopulasi di sini -->
+            </tbody>
+        </table>
+
+        <h2>Update Data di File</h2>
+        <form onsubmit="updateData(event);">
+            <label for="line_number">Nomor Baris:</label>
+            <input type="number" id="line_number" min="1" placeholder="Masukkan nomor baris" required>
+            
+            <label for="new_data">Data Baru:</label>
+            <textarea id="new_data" rows="4" placeholder="Masukkan data baru di sini..." required></textarea><br>
+            
+            <input type="submit" value="Update Data">
+        </form>
+
+        <div class="footer">
+            &copy; 2024 Perbandingan Hash File. Semua hak dilindungi.
+        </div>
+    </div>
+
+    <script>
+        let originalContents = []; // Data asli yang tidak berubah
+        let modifiedContents = []; // Data yang bisa dimodifikasi
+        let originalHash = "";
+        let modifiedHash = "";
+
+        // Fungsi untuk memuat konten dari data.txt
+        async function loadContents() {
+            const response = await fetch('data.txt');
+            const fileData = await response.text();
+            originalContents = fileData.split('\n'); // Simpan data asli
+            modifiedContents = [...originalContents]; // Salin data untuk modifikasi
+            originalHash = calculateHash(fileData);
+            modifiedHash = originalHash; // Inisialisasi hash modifikasi sama dengan hash asli
+            updateTable();
+        }
+
+        // Fungsi untuk menghitung hash
+        function calculateHash(data) {
+            return CryptoJS.SHA256(data).toString();
+        }
+
+        // Fungsi untuk memperbarui tabel
+        function updateTable() {
+            const fileContentTable = document.getElementById('file-content');
+            fileContentTable.innerHTML = "";
+
+            originalContents.forEach((line, index) => {
+                fileContentTable.innerHTML += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${line}</td>
+                    <td>${modifiedContents[index]}</td>
+                </tr>`;
+            });
+
+            document.getElementById('original-hash').innerText = originalHash;
+            document.getElementById('modified-hash').innerText = modifiedHash;
+        }
+
+        // Fungsi untuk memperbarui data
+        function updateData(event) {
+            event.preventDefault(); // Cegah pengiriman form
+            const lineNumber = parseInt(document.getElementById('line_number').value) - 1; // Menghitung indeks baris
+            const newData = document.getElementById('new_data').value;
+
+            if (lineNumber >= 0 && lineNumber < modifiedContents.length) {
+                modifiedContents[lineNumber] = newData; // Update hanya isi modifikasi
+                modifiedHash = calculateHash(modifiedContents.join('\n')); // Hitung hash setelah modifikasi
+                document.getElementById('new_data').value = ''; // Kosongkan input
+                updateTable(); // Perbarui tabel
+            } else {
+                alert("Nomor baris tidak valid!");
+            }
+        }
+
+        // Muat konten saat halaman dimuat
+        loadContents();
+    </script>
+</body>
+</html>
